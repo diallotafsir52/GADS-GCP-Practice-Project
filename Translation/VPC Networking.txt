@@ -1,0 +1,69 @@
+VPC Networking Lab (https://googlepluralsight.qwiklabs.com/focuses/10744243?parent=lti_session)
+
+
+Task 1. Explore the default network
+
+#View the subnets
+gcloud compute networks subnets list
+
+#View the routes
+gcloud compute routes list
+
+#View the firewall rules
+gcloud compute firewall-rules list
+
+#Delete the Firewall rules
+gcloud compute firewall-rules delete default-allow-rdp default-allow-ssh default-allow-internal default-allow-icmp 
+
+#Delete the default network
+gcloud compute networks delete default
+
+#Try to create a VM instance
+gcloud compute instances create instance1
+    #Output
+ERROR: (gcloud.compute.instances.create) Could not fetch resource:
+ - Invalid value for field 'resource.networkInterfaces[0].network': 'https://compute.googleapis.com/compute/v1/projects/qwiklabs-gcp-04-b4f358b35228/global/networks/default'. The referenced network resource cannot be found.
+
+
+ Task 2. Create an auto mode network
+ #Create an auto mode VPC network with firewall rules
+ gcloud compute networks create mynetwork --subnet-mode=auto
+ gcloud compute firewall-rules create default-allow-tcp-udp-icmp --network mynetwork --allow tcp,udp,icmp
+ gcloud compute firewall-rules create default-allow-ssh-rdp-icmp --network mynetwork --allow tcp:22,tcp:3389,icmp
+
+
+ #Create a VM instance in us-central1
+ gcloud compute instances create mynet-us-vm --zone=us-central1-c --machine-type=n1-standard-1 --network=mynetwork
+
+ #Create a VM instance in europe-west1
+ gcloud compute instances create mynet-eu-vm --zone=europe-west1-c --machine-type=n1-standard-1 --network=mynetwork
+
+#Convert the network to a custom mode network
+ gcloud compute networks update mynetwork --switch-to-custom-subnet-mode
+
+
+
+Task 3. Create custom mode networks
+
+#Create the managementnet network
+gcloud compute networks create managementnet --subnet-mode=custom
+gcloud compute networks subnets create managementsubnet-us --network=managementnet --region=us-central1 --range=10.130.0.0/20
+
+#Create the privatenet network
+gcloud compute networks create privatenet --subnet-mode=custom
+gcloud compute networks subnets create privatesubnet-us --network=privatenet --region=us-central1 --range=172.16.0.0/24
+gcloud compute networks subnets create privatesubnet-eu --network=privatenet --region=europe-west1 --range=172.20.0.0/20
+
+#Create the firewall rules for managementnet
+gcloud compute firewall-rules create managementnet-allow-icmp-ssh-rdp --direction=INGRESS --priority=1000 --network=managementnet --action=ALLOW --rules=icmp,tcp:22,tcp:3389 --source-ranges=0.0.0.0/0
+
+#Create the firewall rules for privatenet
+gcloud compute firewall-rules create privatenet-allow-icmp-ssh-rdp --direction=INGRESS --priority=1000 --network=privatenet --action=ALLOW --rules=icmp,tcp:22,tcp:3389 --source-ranges=0.0.0.0/0
+
+#Create the managementnet-us-vm instance
+cloud compute instances create managementnet-us-vm --zone=us-central1-c --machine-type=f1-micro --network=managementnet --subnet=managementsubnet-us
+
+#Create the privatenet-us-vm instance
+gcloud compute instances create privatenet-us-vm --zone=us-central1-c --machine-type=f1-micro --subnet=privatesubnet-us
+
+
