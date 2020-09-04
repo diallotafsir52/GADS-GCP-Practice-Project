@@ -67,3 +67,9 @@ cloud compute instances create managementnet-us-vm --zone=us-central1-c --machin
 gcloud compute instances create privatenet-us-vm --zone=us-central1-c --machine-type=f1-micro --subnet=privatesubnet-us
 
 
+Task 4. Explore the connectivity across networks
+
+#Ping the external IP addresses
+#mynet-us-vm,  SSH connect via Cloud Shell
+gcloud compute ssh mynet-us-vm --zone=us-central1-c
+
