@@ -18,6 +18,13 @@ gcloud compute firewall-rules delete default-allow-rdp default-allow-ssh default
 #Delete the default network
 gcloud compute networks delete default
 
+
+#Without a VPC network, you cannot create VM instances, containers, or App Engine applications.
+    check
+    *True is the good answer
+     False
+
+
 #Try to create a VM instance
 gcloud compute instances create instance1
     #Output
@@ -37,6 +44,17 @@ ERROR: (gcloud.compute.instances.create) Could not fetch resource:
 
  #Create a VM instance in europe-west1
  gcloud compute instances create mynet-eu-vm --zone=europe-west1-c --machine-type=n1-standard-1 --network=mynetwork
+
+#Verify connectivity for the VM instances
+
+gcloud compute ssh mynet-us-vm --zone=us-central1-c
+    #mynet-eu-vm's internal IP
+ping -c 3 10.132.0.2 => 3 packets transmitted, 3 received, 0% packet loss, time 5ms
+    #mynet-eu-vm's name
+ping -c 3 mynet-eu-vm => 3 packets transmitted, 3 received, 0% packet loss, time 5ms
+    #mynet-eu-vm's external IP
+ping -c 3 146.148.126.119 =>3 packets transmitted, 3 received, 0% packet loss, time 5ms
+The firewall rule that allows the ping to mynet-eu-vm's external IP address is mynetwork-allow-icmp
 
 #Convert the network to a custom mode network
  gcloud compute networks update mynetwork --switch-to-custom-subnet-mode
@@ -61,7 +79,7 @@ gcloud compute firewall-rules create managementnet-allow-icmp-ssh-rdp --directio
 gcloud compute firewall-rules create privatenet-allow-icmp-ssh-rdp --direction=INGRESS --priority=1000 --network=privatenet --action=ALLOW --rules=icmp,tcp:22,tcp:3389 --source-ranges=0.0.0.0/0
 
 #Create the managementnet-us-vm instance
-cloud compute instances create managementnet-us-vm --zone=us-central1-c --machine-type=f1-micro --network=managementnet --subnet=managementsubnet-us
+gcloud compute instances create managementnet-us-vm --zone=us-central1-c --machine-type=f1-micro --network=managementnet --subnet=managementsubnet-us
 
 #Create the privatenet-us-vm instance
 gcloud compute instances create privatenet-us-vm --zone=us-central1-c --machine-type=f1-micro --subnet=privatesubnet-us
@@ -72,4 +90,17 @@ Task 4. Explore the connectivity across networks
 #Ping the external IP addresses
 #mynet-us-vm,  SSH connect via Cloud Shell
 gcloud compute ssh mynet-us-vm --zone=us-central1-c
+    #mynet-eu-vm's external IP
+ping -c 3 146.148.126.119 => 3 packets transmitted, 3 received, 0% packet loss, time 3ms
+    #managementnet-us-vm's external IP
+ping -c 3 34.72.239.48 => 3 packets transmitted, 3 received, 0% packet loss, time 5ms
+    #privatenet-us-vm's external IP
+ping -c 3 35.224.192.54  => 3 packets transmitted, 3 received, 0% packet loss, time 6ms
+
+    #mynet-eu-vm's internal IP
+ping -c 3 10.132.0.2 => 3 packets transmitted, 3 received, 0% packet loss, time 5ms
+    #managementnet-us-vm's internal IP
+ping -c 3 10.130.0.2 => 3 packets transmitted, 0 received, 100% packet loss, time 45ms
+    #privatenet-us-vm's internal IP
+ping -c 3 172.16.0.2 => 3 packets transmitted, 0 received, 100% packet loss, time 38ms
 
