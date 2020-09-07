@@ -18,3 +18,7 @@ gcloud compute firewall-rules create default-allow-https --direction=INGRESS --p
 Create a VM
 
 gcloud compute instances create instance-4 --zone=us-west1-b --custom-cpu 6 --custom-memory 32
+
+Connecting to the VM
+
+gcloud compute ssh instance-4 --zone=us-west1-b
